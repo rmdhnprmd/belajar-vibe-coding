@@ -17,7 +17,64 @@ Sedang dalam pengembangan. Lihat branch `feat/bun-elysia-drizzle-mysql` untuk im
 ```bash
 cp .env.example .env   # lalu sesuaikan kredensial MySQL
 bun install
+bun run db:migrate     # jalankan migrasi database
 bun run dev
 ```
 
-Dokumentasi lengkap (endpoint, migrasi, contoh `curl`) akan ditambahkan setelah implementasi selesai.
+## Endpoint
+
+### Health Check
+
+```bash
+curl http://localhost:3000/health
+```
+
+### Registrasi User
+
+**Request:**
+
+```bash
+curl -i -X POST http://localhost:3000/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Rama","email":"email@localhost","password":"rahasia123"}'
+```
+
+**Response sukses** — `201 Created`:
+
+```json
+{ "data": "Ok" }
+```
+
+**Response email duplikat** — `409 Conflict`:
+
+```bash
+# Kirim request yang sama sekali lagi
+curl -i -X POST http://localhost:3000/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Rama","email":"email@localhost","password":"rahasia123"}'
+```
+
+```json
+{ "error": "email sudah terdaftar" }
+```
+
+**Response body tidak valid** — `400 Bad Request`:
+
+```bash
+curl -i -X POST http://localhost:3000/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Rama","email":"rama@localhost","password":"123"}'
+```
+
+```json
+{ "error": "password minimal 8 karakter" }
+```
+
+### Status Code
+
+| Kasus | Status | Body |
+|---|---|---|
+| Registrasi berhasil | `201` | `{ "data": "Ok" }` |
+| Email sudah terdaftar | `409` | `{ "error": "email sudah terdaftar" }` |
+| Body tidak valid | `400` | `{ "error": "<pesan spesifik>" }` |
+| Error server | `500` | `{ "error": "terjadi kesalahan pada server" }` |
